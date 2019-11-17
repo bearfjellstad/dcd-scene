@@ -1,0 +1,33 @@
+{
+    "name": "dcd-scene",
+    "version": "1.0.0",
+    "description": "A wrapper around three.js for creative coding",
+    "main": "dist/main.js",
+    "scripts": {
+        "dev": "webpack-dev-server --config webpack.dev.js --hide-modules",
+        "build": "webpack --config webpack.prod.js",
+        "clean": "rimraf ./dist",
+        "prepublish": "npm run build"
+    },
+    "author": "Bjørn Fjellstad",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/cli": "^7.7.0",
+        "@babel/core": "^7.7.2",
+        "@babel/plugin-proposal-class-properties": "^7.7.0",
+        "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+        "babel-loader": "^8.0.6",
+        "glslify-loader": "^2.0.0",
+        "raw-loader": "^3.1.0",
+        "webpack": "^4.41.2",
+        "webpack-cli": "^3.3.10",
+        "webpack-dev-server": "^3.9.0"
+    },
+    "dependencies": {
+        "@babel/preset-env": "^7.7.1",
+        "fontfaceobserver": "^2.1.0",
+        "glsl-curl-noise": "0.0.4",
+        "glsl-noise": "0.0.0",
+        "lodash": "^4.17.15"
+    }
+}
