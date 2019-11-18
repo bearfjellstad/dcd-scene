@@ -1,8 +1,8 @@
 {
     "name": "dcd-scene",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "description": "A wrapper around three.js for creative coding",
-    "main": "dist/main.js",
+    "main": "dist/main",
     "scripts": {
         "dev": "webpack-dev-server --config webpack.dev.js --hide-modules",
         "build": "webpack --config webpack.prod.js",

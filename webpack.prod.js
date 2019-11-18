@@ -44,7 +44,7 @@ module.exports = {
     // output: '[name]',
     output: {
         library: 'DCDScene',
-        libraryTarget: 'umd',
+        libraryTarget: 'commonjs2',
     },
 
     stats: {
