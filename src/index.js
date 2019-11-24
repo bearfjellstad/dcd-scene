@@ -752,6 +752,8 @@ class DCDScene {
         vertexShader,
         fragmentShader,
         uniforms,
+        widthSegments,
+        heightSegments,
         ...rest
     }) => {
         return new Promise(resolve => {
@@ -765,7 +767,9 @@ class DCDScene {
             }).then(texture => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
-                    texture.image.height * (scale || defaultScaleFactor)
+                    texture.image.height * (scale || defaultScaleFactor),
+                    widthSegments || 1,
+                    heightSegments || 1
                 );
                 const mat = this.createMaterial({
                     uniforms: {
@@ -800,6 +804,8 @@ class DCDScene {
         vertexShader,
         fragmentShader,
         uniforms,
+        widthSegments,
+        heightSegments,
         ...rest
     }) => {
         return new Promise(resolve => {
@@ -808,7 +814,9 @@ class DCDScene {
             this.createImageTexture(src).then(texture => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
-                    texture.image.height * (scale || defaultScaleFactor)
+                    texture.image.height * (scale || defaultScaleFactor),
+                    widthSegments || 1,
+                    heightSegments || 1
                 );
                 const mat = this.createMaterial({
                     uniforms: {
