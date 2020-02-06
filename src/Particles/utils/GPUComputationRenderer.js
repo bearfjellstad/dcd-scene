@@ -154,6 +154,8 @@ export default class GPUComputationRenderer {
         };
 
         this.init = function() {
+            const gl = renderer.getContext();
+
             if (!renderer.capabilities.isWebGL2) {
                 if (!gl.getExtension('OES_texture_float')) {
                     return 'float textures not supported';
