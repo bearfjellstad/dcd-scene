@@ -18,9 +18,11 @@ import Inertia from './utils/Inertia';
 import './utils/shaderChunks';
 
 import Particles from './Particles';
+import SoftBody from './SoftBody';
 import FullscreenFbo from './FullscreenFbo';
 
 class DCDScene {
+    THREE = THREE;
     name = '367';
     canvas = document.querySelector('canvas');
     breakpoints = [
@@ -39,6 +41,7 @@ class DCDScene {
         desktop: { x: 0, y: 0, z: 60 },
     };
     bg = 'rgb(0,0,0)';
+    setBodyBg = false;
     resolution = new THREE.Vector2(0, 0);
     availableWebGLVersion = isWebGLAvailable();
 
@@ -171,6 +174,7 @@ class DCDScene {
     };
 
     particleBuffers = [];
+    softBodies = [];
     fullscreenFbos = [];
 
     constructor(props = {}) {
@@ -178,11 +182,17 @@ class DCDScene {
             this[key] = props[key];
         });
 
+        if (props.THREE) {
+            global.THREE = props.THREE;
+        }
+
         this.scene = new THREE.Scene();
     }
 
     init() {
-        document.body.style.background = this.bg;
+        if (this.setBodyBg) {
+            document.body.style.background = this.bg;
+        }
         this.addListeners();
         this.handleResize();
 
@@ -696,6 +706,16 @@ class DCDScene {
         return instance;
     }
 
+    createSoftBody(geometry) {
+        const instance = new SoftBody({
+            geometry,
+        });
+
+        this.softBodies.push(instance);
+
+        return instance;
+    }
+
     createFullscreenFbo(options = {}) {
         if (!this.inited) {
             console.warn('init must be called before createFullscreenFbo');
@@ -869,6 +889,9 @@ class DCDScene {
 
         for (const particle of this.particleBuffers) {
             particle.render();
+        }
+        for (const softBody of this.softBodies) {
+            softBody.update();
         }
         for (const fbo of this.fullscreenFbos) {
             fbo.render();

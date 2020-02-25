@@ -1,6 +1,6 @@
 {
     "name": "dcd-scene",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "A wrapper around three.js for creative coding",
     "main": "dist/main",
     "scripts": {
