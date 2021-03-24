@@ -12,25 +12,24 @@
     "author": "Bjørn Fjellstad",
     "license": "ISC",
     "devDependencies": {
-        "@babel/cli": "^7.7.0",
-        "@babel/core": "^7.7.2",
-        "@babel/plugin-proposal-class-properties": "^7.7.0",
+        "@babel/cli": "^7.13.10",
+        "@babel/core": "^7.13.10",
+        "@babel/plugin-proposal-class-properties": "^7.13.0",
         "@babel/plugin-proposal-optional-chaining": "^7.13.12",
-        "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-        "babel-loader": "^8.0.6",
+        "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+        "babel-loader": "^8.2.2",
         "glslify-loader": "^2.0.0",
         "raw-loader": "^3.1.0",
-        "webpack": "^4.41.2",
-        "webpack-cli": "^3.3.10",
-        "webpack-dev-server": "^3.9.0"
+        "webpack": "^4.46.0",
+        "webpack-cli": "^3.3.12",
+        "webpack-dev-server": "^3.11.2"
     },
     "dependencies": {
-        "@babel/preset-env": "^7.7.1",
+        "@babel/preset-env": "^7.13.12",
         "deep-extend": "^0.6.0",
         "fontfaceobserver": "^2.1.0",
         "glsl-curl-noise": "0.0.4",
         "glsl-noise": "0.0.0",
-        "lodash": "^4.17.15",
-        "qrcode": "^1.4.4"
+        "just-random": "^2.1.0"
     }
 }

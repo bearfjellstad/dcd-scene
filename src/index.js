@@ -14,7 +14,7 @@ import { clamp } from './utils';
 import getMousePatternPosition from './utils/getMousePatternPosition';
 import createWordTexture from './utils/createWordTexture';
 import isWebGLAvailable from './utils/isWebGLAvailable';
-import getInstagramTexture from './utils/exportTemplates/getNftTexture';
+import getInstagramTexture from './utils/exportTemplates/getInstagramTexture';
 import getNftTexture from './utils/exportTemplates/getNftTexture';
 import getRandomColor from './utils/getRandomColor';
 import Inertia from './utils/Inertia';
@@ -174,7 +174,7 @@ class DCDScene {
         height: 1080,
         frame: 0,
         frameRate: 60,
-        endFrame: 60 * 2,
+        endFrame: 60 * 12,
         idleEndFrames: 60 * 1,
         highjackMouse: true,
         mousePattern: 'spiral',

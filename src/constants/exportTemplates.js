@@ -3,8 +3,8 @@ export const TEMPLATE_INSTAGRAM = {
     height: 1080,
 };
 export const TEMPLATE_NFT = {
-    width: 1080,
-    height: 1080 + 500,
+    width: 1080 * 1,
+    height: 1080 * 1 + 252 * 1,
 };
 
 export default {

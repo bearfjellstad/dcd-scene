@@ -1,7 +1,12 @@
 import FontFaceObserver from 'fontfaceobserver';
+const BOTTOM_HEIGHT = 252 * 1;
 
 function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
     return new Promise((resolve) => {
+        if (!global.QRCode) {
+            return console.warn('QR');
+        }
+
         const font = new FontFaceObserver('Montserrat', {
             weight: 700,
         });
@@ -9,7 +14,7 @@ function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
         font.load().then(() => {
             const multiplier = 2;
             const size = exportWidth * multiplier;
-            const normalizedSize = 1080 * multiplier;
+            const normalizedSize = exportWidth * multiplier * 1.2;
             const aspect = exportHeight / exportWidth;
             const width = size;
             const height = size * aspect;
@@ -23,52 +28,52 @@ function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
             context.fillStyle = '#000';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            context.fillStyle = '#fff';
-            context.fillRect(
-                0,
-                canvas.height - 500 * multiplier,
-                canvas.width,
-                canvas.height
-            );
-
             context.font = `700 ${
                 normalizedSize * 0.031434184675835
             }px "Montserrat"`;
 
+            const sideMargin = normalizedSize * 0.037037037037037;
+            const bottomY = canvas.height - BOTTOM_HEIGHT * multiplier;
+            const logoOffset = sideMargin * 0.25 * 0;
+            const dayOffset = sideMargin * 0.5 * 0;
+
+            // Fill bottom part
             context.fillStyle = '#fff';
+            context.fillRect(0, bottomY, canvas.width, canvas.height);
+
+            context.fillStyle = '#000';
             context.textAlign = 'left';
             context.textBaseline = 'top';
             context.fillText(
                 'Daily',
-                normalizedSize * 0.037037037037037,
-                normalizedSize * 0.037037037037037
+                sideMargin,
+                sideMargin + bottomY + logoOffset
             );
             context.fillText(
                 'CSS',
-                normalizedSize * 0.037037037037037,
-                normalizedSize * 0.037037037037037 * 1.88
+                sideMargin,
+                sideMargin * 1.88 + bottomY + logoOffset
             );
             context.fillText(
                 'Design',
-                normalizedSize * 0.037037037037037,
-                normalizedSize * 0.037037037037037 * 2.7
+                sideMargin,
+                sideMargin * 2.7 + bottomY + logoOffset
             );
 
             context.textAlign = 'right';
             context.fillText(
                 `Day ${day}`,
-                canvas.width - normalizedSize * 0.037037037037037,
-                normalizedSize * 0.037037037037037
+                canvas.width - sideMargin,
+                sideMargin + bottomY + dayOffset
             );
 
             const rectWidth = 0.035;
-
             context.fillRect(
                 canvas.width -
-                    normalizedSize * 0.037037037037037 -
+                    sideMargin -
                     normalizedSize * rectWidth -
                     normalizedSize * 0.001,
-                normalizedSize * 0.037037037037037 * 2.2,
+                sideMargin * 2.2 + bottomY + dayOffset,
                 normalizedSize * rectWidth,
                 3
             );
@@ -78,17 +83,39 @@ function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
             }px "Montserrat"`;
             context.fillText(
                 `@DailyCssDesign`,
-                canvas.width - normalizedSize * 0.037037037037037,
-                normalizedSize * 0.037037037037037 * 2.68
+                canvas.width - sideMargin,
+                sideMargin * 2.68 + bottomY + dayOffset
             );
 
-            const overlayTexture = new THREE.CanvasTexture(canvas);
-            overlayTexture.generateMipmaps = false;
-            overlayTexture.wrapS = overlayTexture.wrapT =
-                THREE.ClampToEdgeWrapping;
-            overlayTexture.minFilter = THREE.LinearFilter;
+            // QR code
+            const qrElement = document.createElement('div');
+            const qrSize = width * 0.15;
+            const qr = new global.QRCode(qrElement, {
+                text: `https://dailycssdesign.com/day/${day}?nft=1`,
+                width: qrSize,
+                height: qrSize,
+                // colorDark: '#fff',
+                // colorLight: '#000',
+                // correctLevel : QRCode.CorrectLevel.H
+            });
 
-            resolve(overlayTexture);
+            setTimeout(() => {
+                context.drawImage(
+                    qr._oDrawing._elImage,
+                    width / 2 - qrSize / 2,
+                    bottomY + sideMargin,
+                    qrSize,
+                    qrSize
+                );
+
+                const overlayTexture = new THREE.CanvasTexture(canvas);
+                overlayTexture.generateMipmaps = false;
+                overlayTexture.wrapS = overlayTexture.wrapT =
+                    THREE.ClampToEdgeWrapping;
+                overlayTexture.minFilter = THREE.LinearFilter;
+
+                resolve(overlayTexture);
+            }, 150);
         });
     });
 }
