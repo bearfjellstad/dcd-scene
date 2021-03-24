@@ -1,3 +1,5 @@
+import deepExtend from 'deep-extend';
+
 import EffectComposer from './postprocessing/EffectComposer';
 import RenderPass from './postprocessing/RenderPass';
 import ShaderPass from './postprocessing/ShaderPass';
@@ -12,10 +14,13 @@ import { clamp } from './utils';
 import getMousePatternPosition from './utils/getMousePatternPosition';
 import createWordTexture from './utils/createWordTexture';
 import isWebGLAvailable from './utils/isWebGLAvailable';
-import getLogoTexture from './utils/getLogoTexture';
+import getInstagramTexture from './utils/exportTemplates/getNftTexture';
+import getNftTexture from './utils/exportTemplates/getNftTexture';
 import getRandomColor from './utils/getRandomColor';
 import Inertia from './utils/Inertia';
 import './utils/shaderChunks';
+
+import exportTemplates from './constants/exportTemplates';
 
 import Particles from './Particles';
 import SoftBody from './SoftBody';
@@ -40,6 +45,8 @@ class DCDScene {
         mobile: { x: 0, y: 0, z: 100 },
         desktop: { x: 0, y: 0, z: 60 },
     };
+    cameraLookAt = new THREE.Vector3(0, 0, 0);
+    cameraOffset = new THREE.Vector3(0, 0, 0);
     bg = 'rgb(0,0,0)';
     setBodyBg = false;
     resolution = new THREE.Vector2(0, 0);
@@ -167,10 +174,13 @@ class DCDScene {
         height: 1080,
         frame: 0,
         frameRate: 60,
-        endFrame: 60 * 12,
+        endFrame: 60 * 2,
         idleEndFrames: 60 * 1,
         highjackMouse: true,
         mousePattern: 'spiral',
+        template: 'nft',
+        fov: 100,
+        cameraOffset: { x: 0, y: 0, z: 0 },
     };
 
     particleBuffers = [];
@@ -178,9 +188,7 @@ class DCDScene {
     fullscreenFbos = [];
 
     constructor(props = {}) {
-        Object.keys(props).map(key => {
-            this[key] = props[key];
-        });
+        deepExtend(this, props);
 
         if (props.THREE) {
             global.THREE = props.THREE;
@@ -190,6 +198,10 @@ class DCDScene {
     }
 
     init() {
+        if (this.capture.active) {
+            this.setupCapture();
+        }
+
         if (this.setBodyBg) {
             document.body.style.background = this.bg;
         }
@@ -223,9 +235,9 @@ class DCDScene {
             this.far
         );
         this.camera.position.set(
-            this.initialCameraPosition[this.breakpoint].x,
-            this.initialCameraPosition[this.breakpoint].y,
-            this.initialCameraPosition[this.breakpoint].z
+            this.initialCameraPosition[this.breakpoint].x + this.cameraOffset.x,
+            this.initialCameraPosition[this.breakpoint].y + this.cameraOffset.y,
+            this.initialCameraPosition[this.breakpoint].z + this.cameraOffset.z
         );
 
         this.clock = new THREE.Clock(false);
@@ -260,22 +272,61 @@ class DCDScene {
 
         this.handleResize();
 
-        if (this.capture.active) {
-            this.capturer = new CCapture({
-                format: 'webm',
-                framerate: this.capture.frameRate,
-                verbose: false,
-                quality: 1,
-                name: this.name,
-            });
+        this.inited = true;
+    }
 
-            this.canvas.style.maxWidth = `${this.capture.width}px`;
-            this.canvas.style.maxHeight = `${this.capture.height}px`;
-            this.canvas.style.minWidth = `${this.capture.width}px`;
-            this.canvas.style.minHeight = `${this.capture.height}px`;
+    setupCapture() {
+        this.capturer = new CCapture({
+            format: 'webm',
+            framerate: this.capture.frameRate,
+            verbose: false,
+            quality: 1,
+            name: this.name,
+        });
+
+        const templateName =
+            this.capture.template || Object.keys(exportTemplates)[0];
+        const template = exportTemplates[templateName];
+        const { width, height } = template;
+
+        this.capture.width = width;
+        this.capture.height = height;
+        const aspect = height / width;
+
+        if (this.capture.cameraOffset?.x) {
+            this.cameraOffset.x = this.capture.cameraOffset?.x;
+        }
+        if (this.capture.cameraOffset?.y) {
+            this.cameraOffset.y = this.capture.cameraOffset?.y;
+        }
+        if (this.capture.cameraOffset?.y) {
+            this.cameraOffset.z = this.capture.cameraOffset?.z;
         }
 
-        this.inited = true;
+        if (templateName === 'nft' && !this.capture.cameraOffset?.y) {
+            const yOffset =
+                -this.initialCameraPosition[this.breakpoint].z * aspect * 0.2;
+            this.cameraLookAt.y = yOffset;
+            this.cameraOffset.y = yOffset;
+        } else if (this.capture.cameraOffset?.y) {
+            this.cameraLookAt.y = this.capture.cameraOffset?.y;
+        }
+
+        if (aspect >= 1) {
+            this.canvas.style.maxWidth = `${100 / aspect}vmin`;
+            this.canvas.style.minWidth = `${100 / aspect}vmin`;
+            this.canvas.style.maxHeight = `100vmin`;
+            this.canvas.style.minHeight = `100vmin`;
+        } else {
+            this.canvas.style.maxWidth = `100vmin`;
+            this.canvas.style.minWidth = `100vmin`;
+            this.canvas.style.maxHeight = `${100 / aspect}vmin`;
+            this.canvas.style.minHeight = `${100 / aspect}vmin`;
+        }
+
+        if (this.capture.fov) {
+            this.fov = this.capture.fov;
+        }
     }
 
     setupOcclusionComposer() {
@@ -366,10 +417,36 @@ class DCDScene {
 
         if (this.capture.active) {
             this.finalPass.material.defines.SHOW_OVERLAY = true;
-            getLogoTexture(this.name).then(texture => {
-                this.finalPass.material.uniforms.uOverlay = { value: texture };
-                this.finalPass.material.needsUpdate = true;
-            });
+            const template = this.capture.template || 'instagram';
+
+            switch (template) {
+                case 'instagram': {
+                    getInstagramTexture({
+                        day: this.name,
+                        width: this.capture.width,
+                        height: this.capture.height,
+                    }).then((texture) => {
+                        this.finalPass.material.uniforms.uOverlay = {
+                            value: texture,
+                        };
+                        this.finalPass.material.needsUpdate = true;
+                    });
+                    break;
+                }
+                case 'nft': {
+                    getNftTexture({
+                        day: this.name,
+                        width: this.capture.width,
+                        height: this.capture.height,
+                    }).then((texture) => {
+                        this.finalPass.material.uniforms.uOverlay = {
+                            value: texture,
+                        };
+                        this.finalPass.material.needsUpdate = true;
+                    });
+                    break;
+                }
+            }
         }
 
         this.composer.addPass(this.finalPass);
@@ -431,7 +508,7 @@ class DCDScene {
 
             this.resolution.set(width * this.dpr, height * this.dpr);
 
-            this.uniforms.resolution.forEach(uniform => {
+            this.uniforms.resolution.forEach((uniform) => {
                 uniform.value.x = width;
                 uniform.value.y = height;
             });
@@ -460,7 +537,7 @@ class DCDScene {
         }
     };
 
-    handleOrientation = event => {
+    handleOrientation = (event) => {
         const x = event.gamma;
         const y = event.beta;
 
@@ -500,7 +577,7 @@ class DCDScene {
         }
     };
 
-    handleMouseMove = e => {
+    handleMouseMove = (e) => {
         if (this.capture.active && this.capture.highjackMouse) return;
 
         let event = e;
@@ -520,11 +597,11 @@ class DCDScene {
         }
     };
 
-    add = mesh => {
+    add = (mesh) => {
         this.scene.add(mesh);
     };
 
-    addToOcclusion = mesh => {
+    addToOcclusion = (mesh) => {
         if (this.useOcclusion) {
             mesh.layers.set(this.occlusionLayer);
         }
@@ -577,6 +654,8 @@ class DCDScene {
     }
 
     getFov = (width, height) => {
+        if (this.capture.fov) return this.capture.fov;
+
         return clamp(
             this.minFov,
             this.maxFov,
@@ -595,7 +674,7 @@ class DCDScene {
     createUniforms(uniforms) {
         if (!uniforms) return {};
 
-        Object.keys(uniforms).forEach(key => {
+        Object.keys(uniforms).forEach((key) => {
             const uniform = uniforms[key];
             if (!uniform) uniform = {};
 
@@ -756,7 +835,7 @@ class DCDScene {
         this.fpsAdjustments++;
     }
 
-    createWordTexture = options => {
+    createWordTexture = (options) => {
         if (!options.fontFamily) {
             options.fontFamily = this.defaultFont;
         }
@@ -776,7 +855,7 @@ class DCDScene {
         heightSegments,
         ...rest
     }) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const defaultScaleFactor = 0.074;
 
             createWordTexture({
@@ -784,7 +863,7 @@ class DCDScene {
                 size,
                 fontFamily: font,
                 weight,
-            }).then(texture => {
+            }).then((texture) => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
                     texture.image.height * (scale || defaultScaleFactor),
@@ -806,9 +885,9 @@ class DCDScene {
         });
     };
 
-    createImageTexture = src => {
-        return new Promise(resolve => {
-            this.textureLoader.load(src, texture => {
+    createImageTexture = (src) => {
+        return new Promise((resolve) => {
+            this.textureLoader.load(src, (texture) => {
                 texture.generateMipmaps = false;
                 texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
                 texture.minFilter = THREE.LinearFilter;
@@ -828,10 +907,10 @@ class DCDScene {
         heightSegments,
         ...rest
     }) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const defaultScaleFactor = 0.074;
 
-            this.createImageTexture(src).then(texture => {
+            this.createImageTexture(src).then((texture) => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
                     texture.image.height * (scale || defaultScaleFactor),
@@ -854,7 +933,7 @@ class DCDScene {
         });
     };
 
-    render = timestamp => {
+    render = (timestamp) => {
         const delta = this.clock.getDelta();
         const elapsed = this.clock.getElapsedTime();
 
@@ -935,7 +1014,7 @@ class DCDScene {
             camera.position.z -= this.camY * mouseMoveZByYFactor[breakpoint];
         }
 
-        camera.lookAt(scene.position);
+        camera.lookAt(this.cameraLookAt);
     };
 
     updateUniforms = (elapsed, delta) => {

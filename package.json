@@ -15,6 +15,7 @@
         "@babel/cli": "^7.7.0",
         "@babel/core": "^7.7.2",
         "@babel/plugin-proposal-class-properties": "^7.7.0",
+        "@babel/plugin-proposal-optional-chaining": "^7.13.12",
         "@babel/plugin-syntax-dynamic-import": "^7.2.0",
         "babel-loader": "^8.0.6",
         "glslify-loader": "^2.0.0",
@@ -25,9 +26,11 @@
     },
     "dependencies": {
         "@babel/preset-env": "^7.7.1",
+        "deep-extend": "^0.6.0",
         "fontfaceobserver": "^2.1.0",
         "glsl-curl-noise": "0.0.4",
         "glsl-noise": "0.0.0",
-        "lodash": "^4.17.15"
+        "lodash": "^4.17.15",
+        "qrcode": "^1.4.4"
     }
 }
