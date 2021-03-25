@@ -7,7 +7,13 @@ uniform float vignetteReduction;
 uniform vec2 uMouse;
 
 #ifdef SHOW_OVERLAY
-uniform sampler2D uOverlay;
+    sampler2D uOverlay;
+#endif
+#ifdef SHOW_NFT
+    #pragma glslify: blur = require(glsl-fast-gaussian-blur)
+    uniform sampler2D uOverlay;
+    uniform float uTime;
+    uniform float uCaptureProgress;
 #endif
 
 varying vec2 vUv;
@@ -108,12 +114,37 @@ void main() {
   #include <dcd_finalPost>
 
   #ifdef SHOW_OVERLAY
-  float overlay = texture2D(uOverlay, vUv).r;
-  color.rgb = mix(
-    color.rgb,
-    vec3(1.),
-    overlay
-  );
+    float overlay = texture2D(uOverlay, vUv).r;
+    color.rgb = mix(
+        color.rgb,
+        vec3(1.),
+        overlay
+    );
+  #endif
+
+  #ifdef SHOW_NFT
+    float overlay = texture2D(uOverlay, vUv).r;
+    float bottomArea = step(0.825, 1. - vUv.y);
+    vec2 bottomUv = vUv - 0.5;
+    bottomUv *= 0.6;
+    bottomUv += 0.5 + vec2(0., 0.35);
+
+    // vec3 bottomTex = texture2D(tDiffuse, bottomUv + vec2(0., 0.4)).rgb;
+    vec3 bottomTex = blur(tDiffuse, bottomUv, resolution, vec2(10., 10.)).rgb;
+
+    float bottomEffect = (sin(uCaptureProgress * 3.141592 * 5.9 + 3.141592 * 1.25) * 0.5 + 0.5);
+    bottomEffect = clamp(pow(bottomEffect, 3.), 0., 1.4);
+    vec3 bottomColor = mix(
+        color.rgb,
+        mix(vec3(0.), bottomTex, 1.),
+        bottomArea * bottomEffect
+    );
+
+    color.rgb = mix(
+        bottomColor,
+        vec3(1.),
+        overlay
+    );
   #endif
 
   gl_FragColor = color;

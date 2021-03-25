@@ -83,6 +83,7 @@ class DCDScene {
         click: [],
         inertiaClick: [],
         resolution: [],
+        captureProgress: [],
     };
 
     mousePosition = {
@@ -178,7 +179,7 @@ class DCDScene {
         idleEndFrames: 60 * 1,
         highjackMouse: true,
         mousePattern: 'spiral',
-        template: 'nft',
+        template: 'instagram',
         fov: 100,
         cameraOffset: { x: 0, y: 0, z: 0 },
     };
@@ -416,11 +417,20 @@ class DCDScene {
         }
 
         if (this.capture.active) {
-            this.finalPass.material.defines.SHOW_OVERLAY = true;
+            if (!this.finalPass.material.uniforms.uCaptureProgress) {
+                this.finalPass.material.uniforms.uCaptureProgress = {
+                    value: 0,
+                };
+            }
+            this.uniforms.captureProgress.push(
+                this.finalPass.material.uniforms.uCaptureProgress
+            );
+
             const template = this.capture.template || 'instagram';
 
             switch (template) {
                 case 'instagram': {
+                    this.finalPass.material.defines.SHOW_OVERLAY = true;
                     getInstagramTexture({
                         day: this.name,
                         width: this.capture.width,
@@ -434,6 +444,7 @@ class DCDScene {
                     break;
                 }
                 case 'nft': {
+                    this.finalPass.material.defines.SHOW_NFT = true;
                     getNftTexture({
                         day: this.name,
                         width: this.capture.width,
@@ -1099,6 +1110,10 @@ class DCDScene {
                 uniform.value.x = this.mouse3dPos.x;
                 uniform.value.y = this.mouse3dPos.y;
             }
+        }
+
+        for (const uniform of uniforms.captureProgress) {
+            uniform.value = this.capture.progress;
         }
     };
 
