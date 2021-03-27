@@ -18,7 +18,7 @@ import Inertia from './utils/Inertia';
 import './utils/shaderChunks';
 
 import Particles from './Particles';
-import SoftBody from './SoftBody';
+// import SoftBody from './SoftBody';
 import FullscreenFbo from './FullscreenFbo';
 
 class DCDScene {
@@ -174,11 +174,13 @@ class DCDScene {
     };
 
     particleBuffers = [];
-    softBodies = [];
+    // softBodies = [];
     fullscreenFbos = [];
 
+    renderListeners = [];
+
     constructor(props = {}) {
-        Object.keys(props).map(key => {
+        Object.keys(props).map((key) => {
             this[key] = props[key];
         });
 
@@ -210,11 +212,13 @@ class DCDScene {
             renderProps.context = context;
         }
 
-        this.renderer = this.renderer = new THREE.WebGLRenderer(renderProps);
+        this.renderer = new THREE.WebGLRenderer(renderProps);
         this.renderer.setSize(this.width, this.height);
         this.renderer.setPixelRatio(this.dpr);
         this.clearColor = new THREE.Color(this.bg);
         this.renderer.setClearColor(this.clearColor, 1);
+        this.renderer.gammaFactor = 2.2;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
 
         this.camera = new THREE.PerspectiveCamera(
             this.fov,
@@ -318,7 +322,7 @@ class DCDScene {
 
             this.additiveBlendPass.uniforms.tAdd.value = this.occlusionRenderTarget.texture;
             this.composer.addPass(this.additiveBlendPass);
-        } else {
+        } else if (this.bloom && this.bloom.strength) {
             this.bloomPass = new UnrealBloomPass(
                 new THREE.Vector2(
                     this.bloom.resolution.x,
@@ -366,7 +370,7 @@ class DCDScene {
 
         if (this.capture.active) {
             this.finalPass.material.defines.SHOW_OVERLAY = true;
-            getLogoTexture(this.name).then(texture => {
+            getLogoTexture(this.name).then((texture) => {
                 this.finalPass.material.uniforms.uOverlay = { value: texture };
                 this.finalPass.material.needsUpdate = true;
             });
@@ -431,7 +435,7 @@ class DCDScene {
 
             this.resolution.set(width * this.dpr, height * this.dpr);
 
-            this.uniforms.resolution.forEach(uniform => {
+            this.uniforms.resolution.forEach((uniform) => {
                 uniform.value.x = width;
                 uniform.value.y = height;
             });
@@ -460,7 +464,7 @@ class DCDScene {
         }
     };
 
-    handleOrientation = event => {
+    handleOrientation = (event) => {
         const x = event.gamma;
         const y = event.beta;
 
@@ -500,7 +504,7 @@ class DCDScene {
         }
     };
 
-    handleMouseMove = e => {
+    handleMouseMove = (e) => {
         if (this.capture.active && this.capture.highjackMouse) return;
 
         let event = e;
@@ -520,11 +524,11 @@ class DCDScene {
         }
     };
 
-    add = mesh => {
+    add = (mesh) => {
         this.scene.add(mesh);
     };
 
-    addToOcclusion = mesh => {
+    addToOcclusion = (mesh) => {
         if (this.useOcclusion) {
             mesh.layers.set(this.occlusionLayer);
         }
@@ -595,7 +599,7 @@ class DCDScene {
     createUniforms(uniforms) {
         if (!uniforms) return {};
 
-        Object.keys(uniforms).forEach(key => {
+        Object.keys(uniforms).forEach((key) => {
             const uniform = uniforms[key];
             if (!uniform) uniform = {};
 
@@ -697,24 +701,24 @@ class DCDScene {
 
         if (instance.particles) {
             if (options.addToOcclusion) {
-                this.addToOcclusion(instance.particles);
+                this.addToOcclusion(instance.object3d);
             } else {
-                this.add(instance.particles);
+                this.add(instance.object3d);
             }
         }
 
         return instance;
     }
 
-    createSoftBody(geometry) {
-        const instance = new SoftBody({
-            geometry,
-        });
+    // createSoftBody(geometry) {
+    //     const instance = new SoftBody({
+    //         geometry,
+    //     });
 
-        this.softBodies.push(instance);
+    //     this.softBodies.push(instance);
 
-        return instance;
-    }
+    //     return instance;
+    // }
 
     createFullscreenFbo(options = {}) {
         if (!this.inited) {
@@ -756,7 +760,7 @@ class DCDScene {
         this.fpsAdjustments++;
     }
 
-    createWordTexture = options => {
+    createWordTexture = (options) => {
         if (!options.fontFamily) {
             options.fontFamily = this.defaultFont;
         }
@@ -776,7 +780,7 @@ class DCDScene {
         heightSegments,
         ...rest
     }) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const defaultScaleFactor = 0.074;
 
             createWordTexture({
@@ -784,7 +788,7 @@ class DCDScene {
                 size,
                 fontFamily: font,
                 weight,
-            }).then(texture => {
+            }).then((texture) => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
                     texture.image.height * (scale || defaultScaleFactor),
@@ -806,9 +810,9 @@ class DCDScene {
         });
     };
 
-    createImageTexture = src => {
-        return new Promise(resolve => {
-            this.textureLoader.load(src, texture => {
+    createImageTexture = (src) => {
+        return new Promise((resolve) => {
+            this.textureLoader.load(src, (texture) => {
                 texture.generateMipmaps = false;
                 texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
                 texture.minFilter = THREE.LinearFilter;
@@ -828,10 +832,10 @@ class DCDScene {
         heightSegments,
         ...rest
     }) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const defaultScaleFactor = 0.074;
 
-            this.createImageTexture(src).then(texture => {
+            this.createImageTexture(src).then((texture) => {
                 const geo = new THREE.PlaneBufferGeometry(
                     texture.image.width * (scale || defaultScaleFactor),
                     texture.image.height * (scale || defaultScaleFactor),
@@ -854,9 +858,13 @@ class DCDScene {
         });
     };
 
-    render = timestamp => {
+    render = (timestamp) => {
         const delta = this.clock.getDelta();
         const elapsed = this.clock.getElapsedTime();
+
+        for (const callback of this.renderListeners) {
+            callback({ delta, elapsed });
+        }
 
         // TWEEN.update(timestamp);
 
@@ -890,9 +898,9 @@ class DCDScene {
         for (const particle of this.particleBuffers) {
             particle.render();
         }
-        for (const softBody of this.softBodies) {
-            softBody.update();
-        }
+        // for (const softBody of this.softBodies) {
+        //     softBody.update();
+        // }
         for (const fbo of this.fullscreenFbos) {
             fbo.render();
         }
@@ -1021,6 +1029,12 @@ class DCDScene {
                 uniform.value.y = this.mouse3dPos.y;
             }
         }
+    };
+
+    onRender = (callback) => {
+        if (typeof callback !== 'function') return;
+
+        this.renderListeners.push(callback);
     };
 
     adjustPerformance = (elapsed, delta) => {

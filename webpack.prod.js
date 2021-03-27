@@ -44,7 +44,9 @@ module.exports = {
     // output: '[name]',
     output: {
         library: 'DCDScene',
-        libraryTarget: 'commonjs2',
+        libraryTarget: 'umd',
+        // crossOriginLoading: 'anonymous',
+        publicPath: '/dist/',
     },
 
     stats: {

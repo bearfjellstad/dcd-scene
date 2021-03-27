@@ -10,6 +10,7 @@ const {
     BufferGeometry,
     BufferAttribute,
     Points,
+    Object3D,
 } = global.THREE;
 
 import GPUComputationRenderer from './utils/GPUComputationRenderer';
@@ -51,6 +52,8 @@ class Particles {
 
         createPoints,
     }) {
+        this.object3d = new Object3D();
+
         this.renderer = renderer;
         this.particles = particles;
 
@@ -149,7 +152,6 @@ class Particles {
         const textureHeight = count / textureWidth;
         this.width = textureWidth;
         this.height = textureHeight;
-        console.log(this.width, this.height);
 
         for (const attribute of this.attributes) {
             attribute.data = this.generateAttributeData(attribute);
@@ -209,6 +211,7 @@ class Particles {
                     this.attributes,
                     this.particleMaterial
                 );
+                this.object3d.add(this.particles);
             }
         }
     }
@@ -415,6 +418,7 @@ class Particles {
             this.mesh.updateMatrix();
             this.mesh.frustumCulled = false;
             this.particles = this.mesh;
+            this.object3d.add(this.particles);
         }
     }
 

@@ -77,31 +77,72 @@ class SoftBody {
         const x = index % this.widthSegments;
         const y = ~~(index / this.widthSegments);
 
+        let topLeft = { id: null };
         let top = { id: null };
+        let topRight = { id: null };
         let right = { id: null };
+        let bottomRight = { id: null };
         let bottom = { id: null };
+        let bottomLeft = { id: null };
         let left = { id: null };
 
-        if (x !== 0 && x !== this.widthSegments - 1) {
+        if (x !== 0) {
             left.fromIndex = index - 1;
             left.toIndex = index;
             left.id = `${left.fromIndex}-${left.toIndex}`;
 
+            // if (y !== 0) {
+            //     topLeft.fromIndex = index - this.widthSegments - 1;
+            //     topLeft.toIndex = index;
+            //     topLeft.id = `${topLeft.fromIndex}-${topLeft.toIndex}`;
+            // }
+
+            // if (y !== this.heightSegments - 1) {
+            //     bottomLeft.fromIndex = index + this.widthSegments - 1;
+            //     bottomLeft.toIndex = index;
+            //     bottomLeft.id = `${bottomLeft.fromIndex}-${bottomLeft.toIndex}`;
+            // }
+        }
+
+        if (x !== this.widthSegments - 1) {
             right.fromIndex = index;
             right.toIndex = index + 1;
             right.id = `${right.fromIndex}-${right.toIndex}`;
+
+            // if (y !== 0) {
+            //     topRight.fromIndex = index - this.widthSegments + 1;
+            //     topRight.toIndex = index;
+            //     topRight.id = `${topRight.fromIndex}-${topRight.toIndex}`;
+            // }
+
+            // if (y !== this.heightSegments - 1) {
+            //     bottomRight.fromIndex = index + this.widthSegments + 1;
+            //     bottomRight.toIndex = index;
+            //     bottomRight.id = `${bottomRight.fromIndex}-${bottomRight.toIndex}`;
+            // }
         }
 
-        if (y !== 0 && y !== this.heightSegments - 1) {
+        if (y !== 0) {
             top.fromIndex = index - this.widthSegments;
             top.toIndex = index;
             top.id = `${top.fromIndex}-${top.toIndex}`;
+        }
 
+        if (y !== this.heightSegments - 1) {
             bottom.fromIndex = index;
             bottom.toIndex = index + this.widthSegments;
             bottom.id = `${bottom.fromIndex}-${bottom.toIndex}`;
         }
 
+        // if (topLeft.id && !this.sticksById[topLeft.id]) {
+        //     // find initial lengths
+        //     const fromPos = this.getPosByIndex(topLeft.fromIndex);
+        //     const toPos = this.getPosByIndex(topLeft.toIndex);
+        //     console.log('topLeft', fromPos, toPos);
+        //     topLeft.initialLength = this.getDiff(fromPos, toPos).length;
+
+        //     this.sticksById[topLeft.id] = topLeft;
+        // }
         if (top.id && !this.sticksById[top.id]) {
             // find initial lengths
             const fromPos = this.getPosByIndex(top.fromIndex);
@@ -110,6 +151,14 @@ class SoftBody {
 
             this.sticksById[top.id] = top;
         }
+        // if (topRight.id && !this.sticksById[topRight.id]) {
+        //     // find initial lengths
+        //     const fromPos = this.getPosByIndex(topRight.fromIndex);
+        //     const toPos = this.getPosByIndex(topRight.toIndex);
+        //     topRight.initialLength = this.getDiff(fromPos, toPos).length;
+
+        //     this.sticksById[topRight.id] = topRight;
+        // }
         if (right.id && !this.sticksById[right.id]) {
             // find initial lengths
             const fromPos = this.getPosByIndex(right.fromIndex);
@@ -118,6 +167,14 @@ class SoftBody {
 
             this.sticksById[right.id] = right;
         }
+        // if (bottomRight.id && !this.sticksById[bottomRight.id]) {
+        //     // find initial lengths
+        //     const fromPos = this.getPosByIndex(bottomRight.fromIndex);
+        //     const toPos = this.getPosByIndex(bottomRight.toIndex);
+        //     bottomRight.initialLength = this.getDiff(fromPos, toPos).length;
+
+        //     this.sticksById[bottomRight.id] = bottomRight;
+        // }
         if (bottom.id && !this.sticksById[bottom.id]) {
             // find initial lengths
             const fromPos = this.getPosByIndex(bottom.fromIndex);
@@ -126,6 +183,14 @@ class SoftBody {
 
             this.sticksById[bottom.id] = bottom;
         }
+        // if (bottomLeft.id && !this.sticksById[bottomLeft.id]) {
+        //     // find initial lengths
+        //     const fromPos = this.getPosByIndex(bottomLeft.fromIndex);
+        //     const toPos = this.getPosByIndex(bottomLeft.toIndex);
+        //     bottomLeft.initialLength = this.getDiff(fromPos, toPos).length;
+
+        //     this.sticksById[bottomLeft.id] = bottomLeft;
+        // }
         if (left.id && !this.sticksById[left.id]) {
             // find initial lengths
             const fromPos = this.getPosByIndex(left.fromIndex);
@@ -173,7 +238,9 @@ class SoftBody {
     }
 
     update() {
-        for (let i = 0; i < 4; i++) {
+        const stickCount = this.sticks.length;
+
+        for (let i = 0; i < 1; i++) {
             for (const stick of this.sticks) {
                 const fromI3 = stick.fromIndex * 3;
                 const toI3 = stick.toIndex * 3;
@@ -193,8 +260,8 @@ class SoftBody {
 
                 const diff = length - stick.initialLength;
                 const perc = diff / length / 2;
-                const offsetX = delta.x * perc;
-                const offsetY = delta.y * perc;
+                const offsetX = delta.x * perc * (1 / stickCount);
+                const offsetY = delta.y * perc * (1 / stickCount);
 
                 if (stick.fromIndex > this.widthSegments - 1) {
                     this.positions[fromI3 + 0] -= offsetX;
