@@ -10,6 +10,7 @@ export default {
     },
     defines: {
         SHOW_MOUSE_TRACE: false,
+        SHOW_NFT: false,
         SHOW_OVERLAY: false,
         IS_MOBILE: false,
     },
