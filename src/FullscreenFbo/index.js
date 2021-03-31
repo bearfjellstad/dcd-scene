@@ -30,8 +30,8 @@ export default class FullscreenFbo {
             minFilter: LinearFilter,
             magFilter: NearestFilter,
             // format: RGBAFormat,
-            // stencilBuffer: false,
-            // depthBuffer: false,
+            stencilBuffer: false,
+            depthBuffer: false,
         };
         this.rtA = new WebGLRenderTarget(
             this.width,

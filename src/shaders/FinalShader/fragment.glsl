@@ -129,15 +129,14 @@ void main() {
     bottomUv *= 0.6;
     bottomUv += 0.5 + vec2(0., 0.35);
 
-    // vec3 bottomTex = texture2D(tDiffuse, bottomUv + vec2(0., 0.4)).rgb;
-    vec3 bottomTex = blur(tDiffuse, bottomUv, resolution, vec2(10., 10.)).rgb;
+    vec3 bottomTex = blur(tDiffuse, bottomUv, resolution, vec2(8., 8.)).rgb;
 
     float bottomEffect = (sin(uCaptureProgress * 3.141592 * 5.9 + 3.141592 * 1.25) * 0.5 + 0.5);
-    bottomEffect = clamp(pow(bottomEffect, 3.), 0., 1.4);
+    bottomEffect = clamp(pow(bottomEffect, 2.), 0., 1.4);
     vec3 bottomColor = mix(
         color.rgb,
         mix(vec3(0.), bottomTex, 1.),
-        bottomArea * bottomEffect
+        bottomArea * (0.2 + bottomEffect * 0.8) * 1.2
     );
 
     color.rgb = mix(

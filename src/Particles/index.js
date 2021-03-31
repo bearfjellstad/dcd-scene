@@ -1,15 +1,9 @@
-import Fbo from './fbo';
 const {
-    ShaderMaterial,
     DataTexture,
     RGBAFormat,
     FloatType,
     LinearFilter,
     ClampToEdgeWrapping,
-    UVMapping,
-    BufferGeometry,
-    BufferAttribute,
-    Points,
     Object3D,
 } = global.THREE;
 
@@ -17,13 +11,10 @@ import GPUComputationRenderer from './utils/GPUComputationRenderer';
 import getFactors from '../utils/getFactors';
 
 import basicVertexShader from '../shaders/basic.vertex.glsl';
-import simulationFragmentShader from './shaders/particlePosition.fragment.glsl';
-
-import particleVertexShader from './shaders/particle.vertex.glsl';
-import particleFragmentShader from './shaders/particle.fragment.glsl';
 
 import physicsPositionShader from './shaders/physicsPosition.fragment.glsl';
 import physicsVelocityShader from './shaders/physicsVelocity.fragment.glsl';
+import blankVelocityShader from './shaders/blankVelocity.fragment.glsl';
 import physicsParticleVertex from './shaders/physicsParticle.vertex.glsl';
 import physicsParticleFragment from './shaders/physicsParticle.fragment.glsl';
 
@@ -116,6 +107,9 @@ class Particles {
             case 'aColor':
                 this.defines.HAS_COLOR = true;
                 break;
+            case 'velocity':
+                this.defines.HAS_VELOCITY = true;
+                break;
             default:
                 break;
         }
@@ -173,119 +167,38 @@ class Particles {
             });
         }
 
+        if (!this.defines.HAS_VELOCITY) {
+            this.defines.HAS_NO_VELOCITY = true;
+            this.noVelocities = true;
+        }
+
         this.particlePositions = new DataTexture(
-            this.positions,
+            new Float32Array(this.positions.length),
             textureWidth,
             textureHeight,
             RGBAFormat,
-            FloatType,
-            UVMapping,
-            ClampToEdgeWrapping,
-            ClampToEdgeWrapping
+            FloatType
         );
+
+        this.particlePositions.image.data = this.positions;
+
         this.particlePositions.generateMipmaps = false;
         this.particlePositions.wrapS = this.particlePositions.wrapT = ClampToEdgeWrapping;
         this.particlePositions.minFilter = LinearFilter;
         this.particlePositions.needsUpdate = true;
 
-        if (this.velocities) {
-            this.setupComputationRenderer();
-        } else {
-            // if we don't have velocities, setup a normal fbo with position updates
-
-            this.setupMaterials();
-
-            // Create the FBO
-            this.fbo = new Fbo({
-                width: textureWidth,
-                height: textureHeight,
-                renderer: this.renderer,
-                simulationMaterial: this.simulationMaterial,
-                renderMaterial: this.particleMaterial,
-            });
-
-            if (this.createPoints) {
-                this.particles = this.createParticles(
-                    textureWidth,
-                    textureHeight,
-                    this.attributes,
-                    this.particleMaterial
-                );
-                this.object3d.add(this.particles);
-            }
-        }
+        this.setupComputationRenderer();
     }
 
     render() {
-        if (this.velocities) {
-            this.gpuCompute.compute();
+        this.gpuCompute.compute();
 
-            this.particleMaterial.uniforms.uPositions.value = this.gpuCompute.getCurrentRenderTarget(
-                this.positionVariable
-            ).texture;
-            this.particleMaterial.uniforms.uVelocities.value = this.gpuCompute.getCurrentRenderTarget(
-                this.velocityVariable
-            ).texture;
-        } else {
-            this.fbo.update();
-        }
-    }
-
-    setupMaterials() {
-        // Particle position shader
-        if (!this.simulationMaterial) {
-            this.simulationMaterial = new ShaderMaterial({
-                uniforms: {
-                    uTime: { type: 'f', value: 0 },
-                    uMouse3d: { value: new THREE.Vector3(0, 0, 0) },
-                    uNoiseStrength: { type: 'f', value: this.noiseStrength },
-                },
-                vertexShader: basicVertexShader,
-                fragmentShader: simulationFragmentShader,
-            });
-
-            this.uniformUpdates.dynamicTime.push(
-                this.simulationMaterial.uniforms.uTime
-            );
-            this.uniformUpdates.mousePosition3d.push(
-                this.simulationMaterial.uniforms.uMouse3d
-            );
-        }
-
-        this.simulationMaterial.uniforms.uPositions = {
-            value: this.particlePositions,
-        };
-
-        // Particle visual shader
-        if (!this.particleMaterial) {
-            this.particleMaterial = new ShaderMaterial({
-                uniforms: {
-                    positions: { type: 't', value: null },
-                    uTime: { type: 'f', value: 0 },
-                    uSize: { type: 'f', value: this.particleSize },
-                    uScale: { type: 'f', value: this.particleScale },
-                },
-                defines: {
-                    ...this.defines,
-                },
-                vertexShader: particleVertexShader,
-                fragmentShader: particleFragmentShader,
-                transparent: this.transparent,
-                depthTest: this.depthTest,
-                blending: this.blending,
-            });
-
-            if (this.uniformUpdates.time) {
-                this.uniformUpdates.time.push(
-                    this.particleMaterial.uniforms.uTime
-                );
-            }
-        }
-
-        if (!this.particleMaterial.uniforms.positions) {
-            // in case user supplied material doesn't have set up positions
-            this.particleMaterial.uniforms.positions = { value: null };
-        }
+        this.particleMaterial.uniforms.uPositions.value = this.gpuCompute.getCurrentRenderTarget(
+            this.positionVariable
+        ).texture;
+        this.particleMaterial.uniforms.uVelocities.value = this.gpuCompute.getCurrentRenderTarget(
+            this.velocityVariable
+        ).texture;
     }
 
     setupComputationRenderer() {
@@ -297,19 +210,30 @@ class Particles {
         );
 
         const dtPosition = this.gpuCompute.createTexture();
+        const dtRestPosition = this.gpuCompute.createTexture();
         const dtVelocity = this.gpuCompute.createTexture();
-
         dtPosition.image.data = this.positions;
+        dtRestPosition.image.data = this.positions;
         dtVelocity.image.data = this.velocities;
+
+        let positionShader = physicsPositionShader;
+        if (this.positionShader) {
+            positionShader = this.positionShader;
+        } else if (this.simulationMaterial) {
+            positionShader = this.simulationMaterial.fragmentShader;
+        }
 
         this.positionVariable = this.gpuCompute.addVariable(
             'uPositions',
-            this.positionShader || physicsPositionShader,
+            positionShader,
             dtPosition
         );
         this.velocityVariable = this.gpuCompute.addVariable(
             'uVelocities',
-            this.velocityShader || physicsVelocityShader,
+            this.velocityShader ||
+                (this.noVelocities
+                    ? blankVelocityShader
+                    : physicsVelocityShader),
             dtVelocity
         );
 
@@ -323,20 +247,27 @@ class Particles {
         ]);
 
         this.positionUniforms = this.positionVariable.material.uniforms;
+        this.positionVariable.material.defines = {
+            ...this.defines,
+            ...this.positionVariable.material.defines,
+        };
+
         this.positionUniforms.uRestPositions = {
-            value: this.particlePositions,
+            value: dtRestPosition,
         };
         this.velocityUniforms = this.velocityVariable.material.uniforms;
         this.velocityUniforms.uRestPositions = {
-            value: this.particlePositions,
+            value: dtRestPosition,
         };
         this.velocityVariable.material.defines = {
             ...this.velocityVariable.material.defines,
             ...this.velocityDefines,
         };
 
-        this.positionUniforms.uTime = { value: 0.0 };
-        this.velocityUniforms.uTime = { value: 0.0 };
+        this.positionUniforms.uTime = { value: 0 };
+        this.positionUniforms.uAmp = { value: this.noiseStrength };
+
+        this.velocityUniforms.uTime = { value: 0 };
         this.velocityUniforms.uMouse3d = { value: new THREE.Vector3() };
 
         this.uniformUpdates.elapsed.push(this.positionUniforms.uTime);
@@ -345,6 +276,15 @@ class Particles {
             this.velocityUniforms.uMouse3d
         );
 
+        // Add uniforms from simulationMaterial
+        if (this.simulationMaterial) {
+            for (const [key, val] of Object.entries(
+                this.simulationMaterial.uniforms
+            )) {
+                this.positionUniforms[key] = val;
+            }
+        }
+
         if (this.gpuCompute.init() !== null) {
             console.log('Something went wrong');
         }
@@ -352,10 +292,10 @@ class Particles {
         if (!this.particleMaterial) {
             this.particleMaterial = new THREE.ShaderMaterial({
                 uniforms: {
-                    uSize: { type: 'f', value: this.particleSize },
-                    uScale: { type: 'f', value: this.particleScale },
-                    uTime: { type: 'f', value: 0 },
-                    uAmp: { type: 'f', value: this.noiseStrength },
+                    uSize: { value: this.particleSize },
+                    uScale: { value: this.particleScale },
+                    uTime: { value: 0 },
+                    uAmp: { value: this.noiseStrength },
                 },
                 vertexShader: physicsParticleVertex,
                 fragmentShader: physicsParticleFragment,
@@ -371,7 +311,7 @@ class Particles {
 
         this.particleMaterial.uniforms.uPositions = { value: dtPosition };
         this.particleMaterial.uniforms.uRestPositions = {
-            value: this.particlePositions,
+            value: dtRestPosition,
         };
         this.particleMaterial.uniforms.uVelocities = { value: dtVelocity };
 
@@ -428,31 +368,6 @@ class Particles {
 
     getIndexesAttribute() {
         return this.indexesAttribute;
-    }
-
-    createParticles(width, height, attributes, renderMaterial) {
-        const l = width * height;
-        const vertices = new Float32Array(l * 3);
-
-        for (let i = 0; i < l; i++) {
-            const i3 = i * 3;
-            vertices[i3] = (i % width) / width;
-            vertices[i3 + 1] = i / width / height;
-        }
-
-        const geometry = new BufferGeometry();
-        geometry.addAttribute('position', new BufferAttribute(vertices, 3));
-
-        if (attributes && attributes.length) {
-            for (const attribute of attributes) {
-                geometry.addAttribute(
-                    attribute.key,
-                    new BufferAttribute(attribute.data, attribute.dimensions)
-                );
-            }
-        }
-
-        return new Points(geometry, renderMaterial);
     }
 
     createDebugPlane() {

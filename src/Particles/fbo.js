@@ -10,6 +10,7 @@ const {
     NearestFilter,
     RGBAFormat,
     OrthographicCamera,
+    ClampToEdgeWrapping,
 } = global.THREE;
 
 class FBO {
@@ -32,10 +33,11 @@ class FBO {
     init() {
         const gl = this.renderer.getContext();
 
-        if (!this.renderer.capabilities.isWebGL2) {
-            if (!gl.getExtension('OES_texture_float')) {
-                throw new Error('float textures not supported');
-            }
+        if (
+            !this.renderer.capabilities.isWebGL2 &&
+            !gl.getExtension('OES_texture_float')
+        ) {
+            throw new Error('float textures not supported');
         }
 
         if (this.renderer.capabilities.maxVertexTextures === 0) {
@@ -47,11 +49,23 @@ class FBO {
         this.orthoCamera = new OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1);
 
         const options = {
+            wrapS: THREE.NearestFilter,
+            wrapT: THREE.NearestFilter,
             minFilter: NearestFilter,
             magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: isMobile() ? HalfFloatType : FloatType,
+
+            format: THREE.RGBAFormat,
+            type: /(iPad|iPhone|iPod)/g.test(navigator.userAgent)
+                ? THREE.HalfFloatType
+                : THREE.FloatType,
             stencilBuffer: false,
+            depthBuffer: false,
+
+            // format: RGBAFormat,
+            // type: isMobile() ? HalfFloatType : FloatType,
+            // stencilBuffer: false,
+            // wrapS: ClampToEdgeWrapping,
+            // wrapT: ClampToEdgeWrapping,
         };
         this.currentRenderTarget = this.renderer.getRenderTarget();
         this.rtt = new WebGLRenderTarget(this.width, this.height, options);

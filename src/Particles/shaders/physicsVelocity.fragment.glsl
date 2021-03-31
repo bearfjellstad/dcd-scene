@@ -1,9 +1,6 @@
 uniform vec3 uMouse3d;
 uniform sampler2D uRestPositions;
 
-#define PI 3.14159265359
-#define PI_2 1.5708
-
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
 

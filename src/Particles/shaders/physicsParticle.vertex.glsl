@@ -25,13 +25,14 @@ void main() {
     vec3 pos = texture2D(uPositions, uv).xyz;
     vec4 vel = texture2D(uVelocities, uv);
 
-    float freq = 0.09;
-    float amp = uAmp;
-    float curlTime = uTime * 0.01;
+    #ifdef HAS_VELOCITY
+        float freq = 0.09;
+        float amp = uAmp;
+        float curlTime = uTime * 0.01;
 
-    vec3 restPos = texture2D(uRestPositions, uv).xyz;
-
-    pos += noise(restPos * freq + curlTime) * amp;
+        vec3 restPos = texture2D(uRestPositions, uv).xyz;
+        pos += noise(restPos * freq + curlTime) * amp;
+    #endif
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.);
     #ifdef HAS_SIZE

@@ -292,6 +292,7 @@ class DCDScene {
         const templateName =
             this.capture.template || Object.keys(exportTemplates)[0];
         const template = exportTemplates[templateName];
+
         const { width, height } = template;
 
         this.capture.width = width;
@@ -325,12 +326,21 @@ class DCDScene {
         } else {
             this.canvas.style.maxWidth = `100vmin`;
             this.canvas.style.minWidth = `100vmin`;
-            this.canvas.style.maxHeight = `${100 / aspect}vmin`;
-            this.canvas.style.minHeight = `${100 / aspect}vmin`;
+            this.canvas.style.maxHeight = `${100 * aspect}vmin`;
+            this.canvas.style.minHeight = `${100 * aspect}vmin`;
         }
 
         if (this.capture.fov) {
             this.fov = this.capture.fov;
+        }
+
+        if (this.capture.highjackMouse) {
+            const mousePatternPos = getMousePatternPosition(
+                this.capture.mousePattern,
+                0
+            );
+            this.mousePosition.x = mousePatternPos.x;
+            this.mousePosition.y = mousePatternPos.y;
         }
     }
 
@@ -436,30 +446,46 @@ class DCDScene {
                 case 'instagram': {
                     this.finalPass.material.defines.SHOW_OVERLAY = true;
                     getInstagramTexture({
-                        day: this.name,
                         width: this.capture.width,
                         height: this.capture.height,
+                        day: this.name,
                     }).then((texture) => {
                         this.finalPass.material.uniforms.uOverlay = {
                             value: texture,
                         };
                         this.finalPass.material.needsUpdate = true;
+                        this.capture.ready = true;
                     });
                     break;
                 }
                 case 'nft': {
                     this.finalPass.material.defines.SHOW_NFT = true;
                     getNftTexture({
-                        day: this.name,
                         width: this.capture.width,
                         height: this.capture.height,
+                        day: this.name,
+                        heading: this.capture.heading,
+                        descriptionLine1: this.capture.descriptionLine1,
+                        descriptionLine2: this.capture.descriptionLine2,
                     }).then((texture) => {
                         this.finalPass.material.uniforms.uOverlay = {
                             value: texture,
                         };
                         this.finalPass.material.needsUpdate = true;
+                        this.capture.ready = true;
                     });
                     break;
+                }
+                case 'templateStill4k': {
+                    this.stop();
+                    window.dcdSetTime = (time) => {
+                        this.dynamicTime = time;
+                        this.start();
+                        this.stop();
+                    };
+                }
+                default: {
+                    this.capture.ready = true;
                 }
             }
         }
@@ -1163,11 +1189,16 @@ class DCDScene {
     };
 
     captureFrame = () => {
-        if (this.capture.frame === 4) {
-            this.capturer.start();
+        if (this.capture.ready && !this.capture.started) {
+            if (this.capture.frame > 4) {
+                this.capturer.start();
+                this.capture.started = true;
+            } else {
+                this.capture.frame++;
+            }
         }
 
-        if (this.capture.frame >= 4) {
+        if (this.capture.started) {
             this.capture.progress = clamp(
                 0,
                 1,
@@ -1181,9 +1212,8 @@ class DCDScene {
                 );
                 this.mousePosition.x = mousePatternPos.x;
                 this.mousePosition.y = mousePatternPos.y;
-            } else {
-                console.log(this.capture.progress);
             }
+            console.log(this.capture.progress);
 
             this.capturer.capture(this.canvas);
 
@@ -1193,9 +1223,9 @@ class DCDScene {
             ) {
                 this.stop();
             }
-        }
 
-        this.capture.frame++;
+            this.capture.frame++;
+        }
     };
 
     getBasicVertexShader = () => basicVertexShader;
