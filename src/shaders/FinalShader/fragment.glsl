@@ -7,7 +7,7 @@ uniform float vignetteReduction;
 uniform vec2 uMouse;
 
 #ifdef SHOW_OVERLAY
-    sampler2D uOverlay;
+    uniform sampler2D uOverlay;
 #endif
 #ifdef SHOW_NFT
     #pragma glslify: blur = require(glsl-fast-gaussian-blur)
