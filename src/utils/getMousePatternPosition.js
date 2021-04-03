@@ -1,8 +1,6 @@
 import { smoothstep, easeInOut } from '.';
 
 export default (pattern, progress) => {
-    // console.log(pattern, progress);
-
     if (pattern === 'spiral') {
         const eased = easeInOut(1.2, 1.5)(progress);
         const rounds = 2;
@@ -11,8 +9,9 @@ export default (pattern, progress) => {
 
         const effect =
             smoothstep(0, 0.1, eased) * smoothstep(0, 0.1, 1 - eased) +
-            smoothstep(0.5, 1, eased) * additionalZoomOnLastRound;
-
+            smoothstep(0.5, 1, eased) *
+                smoothstep(0, 0.03, 1 - eased) *
+                additionalZoomOnLastRound;
         const angle = eased * Math.PI * rounds * 2 + offset;
 
         const x = Math.cos(angle) * effect * 0.5 + 0.5;

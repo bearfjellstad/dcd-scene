@@ -11,6 +11,7 @@ import basicVertexShader from './shaders/basic.vertex.glsl';
 import AdditiveBlendShader from './shaders/AdditiveBlendShader';
 
 import { clamp } from './utils';
+import storage from './utils/storage';
 import getMousePatternPosition from './utils/getMousePatternPosition';
 import createWordTexture from './utils/createWordTexture';
 import isWebGLAvailable from './utils/isWebGLAvailable';
@@ -28,7 +29,7 @@ import FullscreenFbo from './FullscreenFbo';
 
 class DCDScene {
     THREE = THREE;
-    name = '367';
+    name = '';
     canvas = document.querySelector('canvas');
     breakpoints = [
         {
@@ -171,12 +172,10 @@ class DCDScene {
 
     capture = {
         active: global.isCapturing && global.CCapture,
-        width: 1080,
-        height: 1080,
         frame: 0,
         frameRate: 60,
         endFrame: 60 * 12,
-        idleEndFrames: 60 * 1,
+        idleEndFrames: 60 * 2,
         highjackMouse: true,
         mousePattern: 'spiral',
         template: 'instagram',
@@ -208,6 +207,7 @@ class DCDScene {
         if (this.setBodyBg) {
             document.body.style.background = this.bg;
         }
+
         this.addListeners();
         this.handleResize();
 
@@ -293,10 +293,15 @@ class DCDScene {
             this.capture.template || Object.keys(exportTemplates)[0];
         const template = exportTemplates[templateName];
 
-        const { width, height } = template;
+        let { width, height } = template;
+        if (this.capture.width) width = this.capture.width;
+        if (this.capture.height) height = this.capture.height;
 
+        this.width = width;
+        this.height = height;
         this.capture.width = width;
         this.capture.height = height;
+        this.dpr = 1;
         const aspect = height / width;
 
         if (this.capture.cameraOffset?.x) {
@@ -495,20 +500,14 @@ class DCDScene {
 
     addListeners() {
         global.addEventListener('resize', this.handleResize);
-        if (window.DeviceOrientationEvent) {
-            global.addEventListener(
-                'deviceorientation',
-                this.handleOrientation
-            );
-            global.addEventListener(
-                'orientationchange',
-                this.handleOrientationChange
-            );
-        }
+
         if (this.enablePauseOnBlur) {
             global.addEventListener('blur', this.handleBlur);
             global.addEventListener('focus', this.handleFocus);
         }
+
+        // Load device orientation on load if permissions is previously given
+        this.requestDeviceOrientation();
 
         document.body.addEventListener('touchstart', this.handleMouseDown);
         document.body.addEventListener('touchmove', this.handleMouseMove);
@@ -518,6 +517,63 @@ class DCDScene {
         document.body.addEventListener('mousemove', this.handleMouseMove);
         document.body.addEventListener('mouseup', this.handleMouseUp);
     }
+
+    requestDeviceOrientation = () => {
+        if (
+            this.hasRequestedOrientationPermission ||
+            !window.DeviceMotionEvent
+        ) {
+            return;
+        }
+
+        this.hasRequestedOrientationPermission = true;
+
+        const addOrientationListeners = () => {
+            global.addEventListener(
+                'deviceorientation',
+                this.handleOrientation
+            );
+            global.addEventListener(
+                'orientationchange',
+                this.handleOrientationChange
+            );
+        };
+
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            const requestPermission = () => {
+                DeviceMotionEvent.requestPermission().then((response) => {
+                    if (response === 'granted') {
+                        storage.write('dcdHasOrientation', 1);
+                        addOrientationListeners();
+                    } else {
+                        storage.write('dcdHasOrientation', -1);
+                    }
+                });
+            };
+
+            const hasDcdOrientation = storage.read('dcdHasOrientation');
+
+            // If allow previously, request immediately
+            if (hasDcdOrientation === 1) {
+                requestPermission();
+            } else if (!hasDcdOrientation) {
+                const button = document.createElement('button');
+                button.textContent = 'Allow gyroscope';
+                button.style.position = 'fixed';
+                button.style.zIndex = '100';
+                button.style.left = '50%';
+                button.style.top = '50%';
+                button.style.transform = 'translate(-50%,-50%)';
+                button.onclick = () => {
+                    requestPermission();
+                    button.style.display = 'none';
+                };
+                document.body.appendChild(button);
+            }
+        } else {
+            addOrientationListeners();
+        }
+    };
 
     handleResize = () => {
         let width = this.canvas.clientWidth;
@@ -540,7 +596,6 @@ class DCDScene {
 
         if (this.renderer) {
             this.renderer.setSize(width, height);
-
             this.renderer.setPixelRatio(this.dpr);
 
             this.camera.aspect = width / height;
@@ -550,8 +605,8 @@ class DCDScene {
             this.resolution.set(width * this.dpr, height * this.dpr);
 
             this.uniforms.resolution.forEach((uniform) => {
-                uniform.value.x = width;
-                uniform.value.y = height;
+                uniform.value.x = width * this.dpr;
+                uniform.value.y = height * this.dpr;
             });
 
             if (this.usePostProcessing) {
@@ -862,6 +917,11 @@ class DCDScene {
     }
 
     adjustDpr(direction = -1) {
+        if (this.capture.active) {
+            this.dpr = 1;
+            return 1;
+        }
+
         const oldDpr = this.dpr;
         const adjustment = this.maxDpr * 0.2 * direction;
         this.dpr = Math.min(
@@ -1035,7 +1095,6 @@ class DCDScene {
             mouseMoveZByYFactor,
             deviceOrientation,
             camera,
-            scene,
         } = this;
 
         this.camX =
@@ -1189,8 +1248,10 @@ class DCDScene {
     };
 
     captureFrame = () => {
+        const GRACE_FRAMES = 5;
+
         if (this.capture.ready && !this.capture.started) {
-            if (this.capture.frame > 4) {
+            if (this.capture.frame >= GRACE_FRAMES) {
                 this.capturer.start();
                 this.capture.started = true;
             } else {
@@ -1202,7 +1263,7 @@ class DCDScene {
             this.capture.progress = clamp(
                 0,
                 1,
-                this.capture.frame / this.capture.endFrame
+                (this.capture.frame - GRACE_FRAMES) / this.capture.endFrame
             );
 
             if (this.capture.highjackMouse) {
@@ -1213,12 +1274,13 @@ class DCDScene {
                 this.mousePosition.x = mousePatternPos.x;
                 this.mousePosition.y = mousePatternPos.y;
             }
-            console.log(this.capture.progress);
+
+            console.log(parseInt(this.capture.progress * 100) + '%');
 
             this.capturer.capture(this.canvas);
 
             if (
-                this.capture.frame >
+                this.capture.frame - GRACE_FRAMES >
                 this.capture.endFrame + this.capture.idleEndFrames
             ) {
                 this.stop();
