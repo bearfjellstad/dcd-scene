@@ -8,6 +8,7 @@ uniform vec2 uMouse;
 
 #ifdef SHOW_OVERLAY
     uniform sampler2D uOverlay;
+    uniform vec3 uOverlayColor;
 #endif
 #ifdef SHOW_NFT
     #pragma glslify: blur = require(glsl-fast-gaussian-blur)
@@ -117,7 +118,7 @@ void main() {
     float overlay = texture2D(uOverlay, vUv).r;
     color.rgb = mix(
         color.rgb,
-        vec3(1.),
+        uOverlayColor,
         overlay
     );
   #endif

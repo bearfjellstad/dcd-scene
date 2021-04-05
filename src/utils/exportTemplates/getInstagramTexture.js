@@ -1,15 +1,25 @@
 import FontFaceObserver from 'fontfaceobserver';
 
-function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
+const DPI = 2; // render texture 2x
+
+function getNftTexture({
+    day,
+    width: exportWidth,
+    height: exportHeight,
+    textScale,
+}) {
     return new Promise((resolve) => {
         const font = new FontFaceObserver('Montserrat', {
             weight: 700,
         });
 
         font.load().then(() => {
-            const multiplier = 2;
-            const size = exportWidth * multiplier;
-            const normalizedSize = 1080 * multiplier;
+            if (!textScale) {
+                textScale = 1;
+            }
+
+            const size = exportWidth * DPI;
+            const textMultiplier = 1080 * DPI * textScale;
             const aspect = exportHeight / exportWidth;
             const width = size;
             const height = size * aspect;
@@ -24,10 +34,10 @@ function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             context.font = `700 ${
-                normalizedSize * 0.031434184675835
+                textMultiplier * 0.031434184675835
             }px "Montserrat"`;
 
-            const sideMargin = normalizedSize * 0.037037037037037;
+            const sideMargin = textMultiplier * 0.037037037037037;
 
             context.fillStyle = '#fff';
             context.textAlign = 'left';
@@ -48,15 +58,15 @@ function getNftTexture({ day, width: exportWidth, height: exportHeight }) {
             context.fillRect(
                 canvas.width -
                     sideMargin -
-                    normalizedSize * rectWidth -
-                    normalizedSize * 0.001,
+                    textMultiplier * rectWidth -
+                    textMultiplier * 0.001,
                 sideMargin * 2.2,
-                normalizedSize * rectWidth,
+                textMultiplier * rectWidth,
                 3
             );
 
             context.font = `700 ${
-                normalizedSize * (17.5 / 1080)
+                textMultiplier * (17.5 / 1080)
             }px "Montserrat"`;
             context.fillText(
                 `@DailyCssDesign`,

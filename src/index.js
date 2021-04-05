@@ -310,7 +310,7 @@ class DCDScene {
         if (this.capture.cameraOffset?.y) {
             this.cameraOffset.y = this.capture.cameraOffset?.y;
         }
-        if (this.capture.cameraOffset?.y) {
+        if (this.capture.cameraOffset?.z) {
             this.cameraOffset.z = this.capture.cameraOffset?.z;
         }
 
@@ -447,19 +447,37 @@ class DCDScene {
 
             const template = this.capture.template || 'instagram';
 
+            const addLogoOverlay = (props = {}) => {
+                this.finalPass.material.defines.SHOW_OVERLAY = true;
+                getInstagramTexture({
+                    width: this.capture.width,
+                    height: this.capture.height,
+                    day: this.name,
+                    ...props,
+                }).then((texture) => {
+                    this.finalPass.material.uniforms.uOverlay = {
+                        value: texture,
+                    };
+                    if (!this.finalPass.material.uniforms.uOverlayColor) {
+                        this.finalPass.material.uniforms.uOverlayColor = {
+                            value: new THREE.Color(
+                                this.capture.overlayColor || '#fff'
+                            ),
+                        };
+                    }
+                    this.finalPass.material.needsUpdate = true;
+                    this.capture.ready = true;
+                });
+            };
+
             switch (template) {
                 case 'instagram': {
-                    this.finalPass.material.defines.SHOW_OVERLAY = true;
-                    getInstagramTexture({
-                        width: this.capture.width,
-                        height: this.capture.height,
-                        day: this.name,
-                    }).then((texture) => {
-                        this.finalPass.material.uniforms.uOverlay = {
-                            value: texture,
-                        };
-                        this.finalPass.material.needsUpdate = true;
-                        this.capture.ready = true;
+                    addLogoOverlay();
+                    break;
+                }
+                case 'dribbble': {
+                    addLogoOverlay({
+                        textScale: 1.5,
                     });
                     break;
                 }
@@ -897,10 +915,13 @@ class DCDScene {
             return;
         }
 
+        let width = options.width || this.width;
+        let height = options.height || this.height;
+
         const props = {
             renderer: this.renderer,
-            width: this.width,
-            height: this.height,
+            width,
+            height,
             ...options,
         };
         if (!props.material) {
