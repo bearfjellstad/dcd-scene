@@ -1,15 +1,16 @@
-/**
- * @author Magnus Bergman <magnus@apt.no>
- */
+import THREE from '../utils/threeProxy';
 
-const { OrthographicCamera, PlaneBufferGeometry, Mesh } = global.THREE;
-
-const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-const geometry = new PlaneBufferGeometry(2, 2);
+let camera;
+let geometry;
 
 export default class FullScreenQuad {
     constructor(material) {
-        this._mesh = new Mesh(geometry, material);
+        if (!camera) {
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            geometry = new THREE.PlaneBufferGeometry(2, 2);
+        }
+
+        this._mesh = new THREE.Mesh(geometry, material);
     }
 
     get material() {

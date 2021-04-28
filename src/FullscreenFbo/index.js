@@ -1,18 +1,7 @@
 import basicVs from '../shaders/basic.vertex.glsl';
 import defaultFs from './shaders/default.fs';
 
-const {
-    WebGLRenderTarget,
-    Scene,
-    Mesh,
-    BufferAttribute,
-    BufferGeometry,
-    OrthographicCamera,
-    ShaderMaterial,
-    LinearFilter,
-    NearestFilter,
-    RGBAFormat,
-} = global.THREE;
+import THREE from '../utils/threeProxy';
 
 export default class FullscreenFbo {
     constructor({ width, height, renderer, material, uniforms }) {
@@ -27,13 +16,13 @@ export default class FullscreenFbo {
 
     init() {
         const renderTargetParams = {
-            minFilter: LinearFilter,
-            magFilter: NearestFilter,
-            // format: RGBAFormat,
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.NearestFilter,
+            // format: THREE.RGBAFormat,
             stencilBuffer: false,
             depthBuffer: false,
         };
-        this.rtA = new WebGLRenderTarget(
+        this.rtA = new THREE.WebGLRenderTarget(
             this.width,
             this.height,
             renderTargetParams
@@ -41,14 +30,14 @@ export default class FullscreenFbo {
         this.rtB = this.rtA.clone();
         this.currentRenderTarget = this.renderer.getRenderTarget();
 
-        this.sceneA = new Scene();
-        this.sceneB = new Scene();
+        this.sceneA = new THREE.Scene();
+        this.sceneB = new THREE.Scene();
         // prettier-ignore
-        this.orthoCamera = new OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1);
+        this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1);
 
-        const geom = new BufferGeometry();
+        const geom = new THREE.BufferGeometry();
         // prettier-ignore
-        geom.addAttribute('position', new BufferAttribute(
+        geom.setAttribute('position', new THREE.BufferAttribute(
             new Float32Array([
                 -1, -1, 0,
                 1, -1, 0,
@@ -61,7 +50,7 @@ export default class FullscreenFbo {
             3
         ));
         // prettier-ignore
-        geom.addAttribute('uv', new BufferAttribute(
+        geom.setAttribute('uv', new THREE.BufferAttribute(
             new Float32Array([
                 0,0, 1,0,
                 1,1, 0,0,
@@ -72,18 +61,18 @@ export default class FullscreenFbo {
 
         this.setupMaterial();
 
-        const meshA = new Mesh(geom, this.material);
+        const meshA = new THREE.Mesh(geom, this.material);
         meshA.autoUpdate = false;
         this.sceneA.add(meshA);
 
-        const meshB = new Mesh(geom, this.material);
+        const meshB = new THREE.Mesh(geom, this.material);
         meshB.autoUpdate = false;
         this.sceneB.add(meshB);
     }
 
     setupMaterial() {
         if (!this.material) {
-            this.material = new ShaderMaterial({
+            this.material = new THREE.ShaderMaterial({
                 vertexShader: basicVs,
                 fragmentShader: defaultFs,
                 uniforms: this.uniforms || {},

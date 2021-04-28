@@ -1,16 +1,3 @@
-const {
-    // ShaderMaterial,
-    // DataTexture,
-    // RGBAFormat,
-    // FloatType,
-    // LinearFilter,
-    // ClampToEdgeWrapping,
-    // UVMapping,
-    // BufferGeometry,
-    // BufferAttribute,
-    // Points,
-} = global.THREE;
-
 class SoftBody {
     positions = [];
     oldPositions = [];

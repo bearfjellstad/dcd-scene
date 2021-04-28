@@ -1,17 +1,5 @@
-import isMobile from '../utils/isMobile';
-const {
-    WebGLRenderTarget,
-    Scene,
-    Mesh,
-    BufferAttribute,
-    BufferGeometry,
-    FloatType,
-    HalfFloatType,
-    NearestFilter,
-    RGBAFormat,
-    OrthographicCamera,
-    ClampToEdgeWrapping,
-} = global.THREE;
+// import isMobile from '../utils/isMobile';
+import THREE from '../utils/threeProxy';
 
 class FBO {
     constructor({
@@ -44,15 +32,15 @@ class FBO {
             throw new Error('vertex shader cannot read textures');
         }
 
-        this.scene = new Scene();
+        this.scene = new THREE.Scene();
         // prettier-ignore
-        this.orthoCamera = new OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1);
+        this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1);
 
         const options = {
             wrapS: THREE.NearestFilter,
             wrapT: THREE.NearestFilter,
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
 
             format: THREE.RGBAFormat,
             type: /(iPad|iPhone|iPod)/g.test(navigator.userAgent)
@@ -68,12 +56,16 @@ class FBO {
             // wrapT: ClampToEdgeWrapping,
         };
         this.currentRenderTarget = this.renderer.getRenderTarget();
-        this.rtt = new WebGLRenderTarget(this.width, this.height, options);
+        this.rtt = new THREE.WebGLRenderTarget(
+            this.width,
+            this.height,
+            options
+        );
         this.renderMaterial.uniforms.positions.value = this.rtt.texture;
 
-        const geom = new BufferGeometry();
+        const geom = new THREE.BufferGeometry();
         // prettier-ignore
-        geom.addAttribute('position', new BufferAttribute(
+        geom.setAttribute('position', new THREE.BufferAttribute(
             new Float32Array([
                 -1, -1, 0,
                 1, -1, 0,
@@ -86,7 +78,7 @@ class FBO {
             3
         ));
         // prettier-ignore
-        geom.addAttribute('uv', new BufferAttribute(
+        geom.setAttribute('uv', new THREE.BufferAttribute(
             new Float32Array([
                 0,0, 1,0,
                 1,1, 0,0,
@@ -95,7 +87,7 @@ class FBO {
             2
         ));
 
-        const mesh = new Mesh(geom, this.simulationMaterial);
+        const mesh = new THREE.Mesh(geom, this.simulationMaterial);
         this.scene.add(mesh);
     }
 

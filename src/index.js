@@ -6,7 +6,7 @@ import ShaderPass from './postprocessing/ShaderPass';
 import UnrealBloomPass from './postprocessing/UnrealBloomPass';
 import CopyShader from './postprocessing/shaders/CopyShader';
 
-import FinalShader from './shaders/FinalShader';
+import createFinalShader from './shaders/FinalShader';
 import basicVertexShader from './shaders/basic.vertex.glsl';
 import AdditiveBlendShader from './shaders/AdditiveBlendShader';
 
@@ -19,7 +19,8 @@ import getInstagramTexture from './utils/exportTemplates/getInstagramTexture';
 import getNftTexture from './utils/exportTemplates/getNftTexture';
 import getRandomColor from './utils/getRandomColor';
 import Inertia from './utils/Inertia';
-import './utils/shaderChunks';
+import addShaderChunks from './utils/addShaderChunks';
+import THREE, { setThree } from './utils/threeProxy';
 
 import exportTemplates from './constants/exportTemplates';
 
@@ -28,7 +29,7 @@ import Particles from './Particles';
 import FullscreenFbo from './FullscreenFbo';
 
 class DCDScene {
-    THREE = THREE;
+    THREE = global.THREE || null;
     name = '';
     canvas = document.querySelector('canvas');
     breakpoints = [
@@ -46,11 +47,11 @@ class DCDScene {
         mobile: { x: 0, y: 0, z: 100 },
         desktop: { x: 0, y: 0, z: 60 },
     };
-    cameraLookAt = new THREE.Vector3(0, 0, 0);
-    cameraOffset = new THREE.Vector3(0, 0, 0);
+    cameraLookAt = { x: 0, y: 0, z: 0 };
+    cameraOffset = { x: 0, y: 0, z: 0 };
     bg = 'rgb(0,0,0)';
     setBodyBg = false;
-    resolution = new THREE.Vector2(0, 0);
+    resolution = { x: 0, y: 0 };
     availableWebGLVersion = isWebGLAvailable();
 
     isRunning = false;
@@ -130,8 +131,8 @@ class DCDScene {
         mobile: 1.5,
         desktop: 1.5,
     };
-    mouse3dVec = new THREE.Vector3();
-    mouse3dPos = new THREE.Vector3();
+    mouse3dVec = { x: 0, y: 0, z: 0 };
+    mouse3dPos = { x: 0, y: 0, z: 0 };
 
     showFinalShaderMouseTrace = false;
 
@@ -141,7 +142,6 @@ class DCDScene {
     occlusionLayer = 1;
     occlusionScale = window.devicePixelRatio < 2 ? 1 : 0.5;
 
-    finalShader = FinalShader;
     bloom = {
         resolution: {
             x: 512,
@@ -161,7 +161,6 @@ class DCDScene {
 
     enablePauseOnBlur = false;
 
-    textureLoader = new THREE.TextureLoader();
     measureLength = 10;
     measuredFps = [];
     adjustDprFps = 40;
@@ -192,11 +191,31 @@ class DCDScene {
     constructor(props = {}) {
         deepExtend(this, props);
 
+        let three;
+
         if (props.THREE) {
-            global.THREE = props.THREE;
+            three = props.THREE;
+        } else if (!this.THREE) {
+            throw 'THREE is not available on window nor passed in in settings';
+        } else {
+            three = global.THREE;
         }
 
-        this.scene = new THREE.Scene();
+        setThree(three);
+
+        this.scene = new three.Scene();
+    }
+
+    initThreeVariables() {
+        this.textureLoader = new THREE.TextureLoader();
+        this.finalShader = createFinalShader();
+        this.mouse3dVec = new THREE.Vector3();
+        this.mouse3dPos = new THREE.Vector3();
+
+        this.cameraLookAt = new THREE.Vector3(0, 0, 0);
+        this.cameraOffset = new THREE.Vector3(0, 0, 0);
+
+        this.resolution = new THREE.Vector2(0, 0);
     }
 
     init() {
@@ -208,6 +227,7 @@ class DCDScene {
             document.body.style.background = this.bg;
         }
 
+        this.initThreeVariables();
         this.addListeners();
         this.handleResize();
 
@@ -274,6 +294,8 @@ class DCDScene {
 
         this.click = 0;
         this.inertiaClick = new Inertia(0, 1, 0.4, 0.28);
+
+        addShaderChunks();
 
         this.handleResize();
 
@@ -789,7 +811,7 @@ class DCDScene {
         if (!uniforms) return {};
 
         Object.keys(uniforms).forEach((key) => {
-            const uniform = uniforms[key];
+            let uniform = uniforms[key];
             if (!uniform) uniform = {};
 
             switch (key) {

@@ -2,7 +2,7 @@ import FontFaceObserver from 'fontfaceobserver';
 
 const DPI = 2; // render texture 2x
 
-function getNftTexture({
+function getInstagramTexture({
     day,
     width: exportWidth,
     height: exportHeight,
@@ -85,4 +85,4 @@ function getNftTexture({
     });
 }
 
-export default getNftTexture;
+export default getInstagramTexture;

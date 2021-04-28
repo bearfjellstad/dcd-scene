@@ -1,16 +1,7 @@
 /**
  * @author alteredq / http://alteredqualia.com/
  */
-
-const {
-    WebGLRenderTarget,
-    OrthographicCamera,
-    PlaneBufferGeometry,
-    Mesh,
-    Vector2,
-    LinearFilter,
-    RGBAFormat,
-} = THREE;
+import THREE from '../utils/threeProxy';
 
 import CopyShader from './shaders/CopyShader';
 import ShaderPass from './ShaderPass';
@@ -23,16 +14,20 @@ export default class EffectComposer {
 
         if (typeof renderTarget === 'undefined') {
             const parameters = {
-                minFilter: LinearFilter,
-                magFilter: LinearFilter,
-                format: RGBAFormat,
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat,
                 stencilBuffer: false,
             };
 
             const { width, height } = renderer.getDrawingBufferSize(
-                new Vector2()
+                new THREE.Vector2()
             );
-            renderTarget = new WebGLRenderTarget(width, height, parameters);
+            renderTarget = new THREE.WebGLRenderTarget(
+                width,
+                height,
+                parameters
+            );
             renderTarget.texture.name = 'EffectComposer.rt1';
         }
 
@@ -61,7 +56,7 @@ export default class EffectComposer {
     addPass(pass) {
         this.passes.push(pass);
 
-        const size = this.renderer.getDrawingBufferSize(new Vector2());
+        const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
         pass.setSize(size.width, size.height);
     }
 
@@ -132,7 +127,7 @@ export default class EffectComposer {
     reset(renderTarget) {
         if (typeof renderTarget === 'undefined') {
             const { width, height } = this.renderer.getDrawingBufferSize(
-                new Vector2()
+                new THREE.Vector2()
             );
 
             renderTarget = this.renderTarget1.clone();
@@ -180,12 +175,17 @@ export class Pass {
     }
 }
 
-const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-const geometry = new PlaneBufferGeometry(2, 2);
+let camera;
+let geometry;
 
 export class FullScreenQuad {
     constructor(material) {
-        this._mesh = new Mesh(geometry, material);
+        if (!camera) {
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            geometry = new THREE.PlaneBufferGeometry(2, 2);
+        }
+
+        this._mesh = new THREE.Mesh(geometry, material);
     }
 
     get material() {

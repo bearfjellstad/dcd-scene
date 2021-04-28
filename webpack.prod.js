@@ -1,6 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
-const glob = require('glob');
+// const glob = require('glob');
 
 module.exports = {
     module: {
@@ -53,11 +53,17 @@ module.exports = {
         all: true,
     },
 
-    plugins: [new webpack.DefinePlugin({})],
+    plugins: [
+        new webpack.DefinePlugin({}),
+        // new webpack.ProvidePlugin({
+        //     identifier: 'THREE',
+        // }),
+    ],
 
     mode: 'production',
 
     optimization: {
+        minimize: true,
         splitChunks: {
             cacheGroups: {
                 vendors: {

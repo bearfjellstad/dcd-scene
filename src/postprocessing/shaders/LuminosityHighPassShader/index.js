@@ -5,10 +5,12 @@
  * http://en.wikipedia.org/wiki/Luminosity
  */
 
+import THREE from '../../../utils/threeProxy';
+
 import vertexShader from './vertex.glsl';
 import fragmentShader from './fragment.glsl';
 
-export default {
+export default () => ({
     shaderID: 'luminosityHighPass',
     uniforms: {
         tDiffuse: { type: 't', value: null },
@@ -19,4 +21,4 @@ export default {
     },
     vertexShader,
     fragmentShader,
-};
+});

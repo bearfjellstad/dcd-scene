@@ -2,7 +2,7 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-const { UniformsUtils, ShaderMaterial } = THREE;
+import THREE from '../utils/threeProxy';
 
 import Pass from './Pass';
 import FullScreenQuad from './FullScreenQuad';
@@ -13,14 +13,14 @@ export default class ShaderPass extends Pass {
 
         this.textureID = textureID || 'tDiffuse';
 
-        if (shader instanceof ShaderMaterial) {
+        if (shader instanceof THREE.ShaderMaterial) {
             this.uniforms = shader.uniforms;
 
             this.material = shader;
         } else if (shader) {
-            this.uniforms = UniformsUtils.clone(shader.uniforms);
+            this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-            this.material = new ShaderMaterial({
+            this.material = new THREE.ShaderMaterial({
                 defines: shader.defines || {},
                 uniforms: this.uniforms,
                 vertexShader: shader.vertexShader,

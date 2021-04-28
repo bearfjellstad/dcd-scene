@@ -1,11 +1,4 @@
-const {
-    DataTexture,
-    RGBAFormat,
-    FloatType,
-    LinearFilter,
-    ClampToEdgeWrapping,
-    Object3D,
-} = global.THREE;
+import THREE from '../utils/threeProxy';
 
 import GPUComputationRenderer from './utils/GPUComputationRenderer';
 import getFactors from '../utils/getFactors';
@@ -43,7 +36,7 @@ class Particles {
 
         createPoints,
     }) {
-        this.object3d = new Object3D();
+        this.object3d = new THREE.Object3D();
 
         this.renderer = renderer;
         this.particles = particles;
@@ -172,19 +165,20 @@ class Particles {
             this.noVelocities = true;
         }
 
-        this.particlePositions = new DataTexture(
+        this.particlePositions = new THREE.DataTexture(
             new Float32Array(this.positions.length),
             textureWidth,
             textureHeight,
-            RGBAFormat,
-            FloatType
+            THREE.RGBAFormat,
+            THREE.FloatType
         );
 
         this.particlePositions.image.data = this.positions;
 
         this.particlePositions.generateMipmaps = false;
-        this.particlePositions.wrapS = this.particlePositions.wrapT = ClampToEdgeWrapping;
-        this.particlePositions.minFilter = LinearFilter;
+        this.particlePositions.wrapS = this.particlePositions.wrapT =
+            THREE.ClampToEdgeWrapping;
+        this.particlePositions.minFilter = THREE.LinearFilter;
         this.particlePositions.needsUpdate = true;
 
         this.setupComputationRenderer();
@@ -324,7 +318,7 @@ class Particles {
 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(count * 3);
-        geometry.addAttribute(
+        geometry.setAttribute(
             'position',
             new THREE.BufferAttribute(positions, 3)
         );
@@ -338,11 +332,11 @@ class Particles {
             indexes[i * 2 + 1] = y;
         }
         this.indexesAttribute = new THREE.BufferAttribute(indexes, 2);
-        geometry.addAttribute('uv', this.indexesAttribute);
+        geometry.setAttribute('uv', this.indexesAttribute);
 
         if (this.attributes && this.attributes.length) {
             for (const attribute of this.attributes) {
-                geometry.addAttribute(
+                geometry.setAttribute(
                     attribute.key,
                     new THREE.BufferAttribute(
                         attribute.data,
