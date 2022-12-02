@@ -1,4 +1,4 @@
-import deepExtend from 'deep-extend';
+import extend from 'just-extend';
 let localThree = {};
 let originalRef;
 
@@ -8,7 +8,7 @@ export const setThree = (three) => {
     }
 
     originalRef = three;
-    deepExtend(localThree, three);
+    extend(localThree, three);
 };
 
 /**

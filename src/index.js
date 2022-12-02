@@ -1,4 +1,4 @@
-import deepExtend from 'deep-extend';
+import extend from 'just-extend';
 
 import EffectComposer from './postprocessing/EffectComposer';
 import RenderPass from './postprocessing/RenderPass';
@@ -189,7 +189,61 @@ class DCDScene {
     renderListeners = [];
 
     constructor(props = {}) {
-        deepExtend(this, props);
+        if (props.initialCameraPosition) {
+            props.initialCameraPosition = {
+                ...this.initialCameraPosition,
+                ...props.initialCameraPosition,
+            };
+        }
+        if (props.mousePosition) {
+            props.mousePosition = {
+                ...this.mousePosition,
+                ...props.mousePosition,
+            };
+        }
+        if (props.mouseInertiaPosition) {
+            props.mouseInertiaPosition = {
+                ...this.mouseInertiaPosition,
+                ...props.mouseInertiaPosition,
+            };
+        }
+        if (props.deviceOrientation) {
+            props.deviceOrientation = {
+                ...this.deviceOrientation,
+                ...props.deviceOrientation,
+            };
+        }
+        if (props.mouseMoveForce) {
+            props.mouseMoveForce = {
+                ...this.mouseMoveForce,
+                ...props.mouseMoveForce,
+            };
+        }
+        if (props.mouseMoveSpeed) {
+            props.mouseMoveSpeed = {
+                ...this.mouseMoveSpeed,
+                ...props.mouseMoveSpeed,
+            };
+        }
+        if (props.mouseMoveZByYFactor) {
+            props.mouseMoveZByYFactor = {
+                ...this.mouseMoveZByYFactor,
+                ...props.mouseMoveZByYFactor,
+            };
+        }
+        if (props.bloom) {
+            props.bloom = {
+                ...this.bloom,
+                ...props.bloom,
+            };
+        }
+        if (props.capture) {
+            props.capture = {
+                ...this.capture,
+                ...props.capture,
+            };
+        }
+        extend(this, props);
 
         let three;
 
@@ -202,6 +256,7 @@ class DCDScene {
         }
 
         setThree(three);
+        this.initThreeVariables();
 
         this.scene = new three.Scene();
     }
@@ -227,7 +282,6 @@ class DCDScene {
             document.body.style.background = this.bg;
         }
 
-        this.initThreeVariables();
         this.addListeners();
         this.handleResize();
 

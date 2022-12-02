@@ -1,4 +1,3 @@
-const webpack = require('webpack');
 const path = require('path');
 // const glob = require('glob');
 
@@ -53,12 +52,7 @@ module.exports = {
         all: true,
     },
 
-    plugins: [
-        new webpack.DefinePlugin({}),
-        // new webpack.ProvidePlugin({
-        //     identifier: 'THREE',
-        // }),
-    ],
+    plugins: [],
 
     mode: 'production',
 
