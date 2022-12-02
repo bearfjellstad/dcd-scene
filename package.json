@@ -1,12 +1,13 @@
 {
     "name": "dcd-scene",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "description": "A wrapper around three.js for creative coding",
     "main": "dist/main",
     "scripts": {
         "build": "webpack --config webpack.prod.js",
         "clean": "rimraf ./dist",
-        "prepublish": "npm run build"
+        "prepublish": "npm run build",
+        "version": "standard-version"
     },
     "author": "Bjørn Fjellstad",
     "license": "ISC",
