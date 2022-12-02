@@ -37,7 +37,7 @@ export default class FullscreenFbo {
 
         const geom = new THREE.BufferGeometry();
         // prettier-ignore
-        geom.setAttribute('position', new THREE.BufferAttribute(
+        geom.addAttribute('position', new THREE.BufferAttribute(
             new Float32Array([
                 -1, -1, 0,
                 1, -1, 0,
@@ -50,7 +50,7 @@ export default class FullscreenFbo {
             3
         ));
         // prettier-ignore
-        geom.setAttribute('uv', new THREE.BufferAttribute(
+        geom.addAttribute('uv', new THREE.BufferAttribute(
             new Float32Array([
                 0,0, 1,0,
                 1,1, 0,0,

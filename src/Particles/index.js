@@ -187,12 +187,14 @@ class Particles {
     render() {
         this.gpuCompute.compute();
 
-        this.particleMaterial.uniforms.uPositions.value = this.gpuCompute.getCurrentRenderTarget(
-            this.positionVariable
-        ).texture;
-        this.particleMaterial.uniforms.uVelocities.value = this.gpuCompute.getCurrentRenderTarget(
-            this.velocityVariable
-        ).texture;
+        this.particleMaterial.uniforms.uPositions.value =
+            this.gpuCompute.getCurrentRenderTarget(
+                this.positionVariable
+            ).texture;
+        this.particleMaterial.uniforms.uVelocities.value =
+            this.gpuCompute.getCurrentRenderTarget(
+                this.velocityVariable
+            ).texture;
     }
 
     setupComputationRenderer() {
@@ -318,7 +320,7 @@ class Particles {
 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(count * 3);
-        geometry.setAttribute(
+        geometry.addAttribute(
             'position',
             new THREE.BufferAttribute(positions, 3)
         );
@@ -332,11 +334,11 @@ class Particles {
             indexes[i * 2 + 1] = y;
         }
         this.indexesAttribute = new THREE.BufferAttribute(indexes, 2);
-        geometry.setAttribute('uv', this.indexesAttribute);
+        geometry.addAttribute('uv', this.indexesAttribute);
 
         if (this.attributes && this.attributes.length) {
             for (const attribute of this.attributes) {
-                geometry.setAttribute(
+                geometry.addAttribute(
                     attribute.key,
                     new THREE.BufferAttribute(
                         attribute.data,

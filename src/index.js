@@ -409,7 +409,8 @@ class DCDScene {
         if (this.useOcclusion) {
             this.additiveBlendPass = new ShaderPass(AdditiveBlendShader);
 
-            this.additiveBlendPass.uniforms.tAdd.value = this.occlusionRenderTarget.texture;
+            this.additiveBlendPass.uniforms.tAdd.value =
+                this.occlusionRenderTarget.texture;
             this.composer.addPass(this.additiveBlendPass);
         } else if (this.bloom && this.bloom.strength) {
             this.bloomPass = new UnrealBloomPass(
@@ -494,13 +495,15 @@ class DCDScene {
 
             switch (template) {
                 case 'instagram': {
-                    addLogoOverlay();
+                    // addLogoOverlay();
+                    this.capture.ready = true;
                     break;
                 }
                 case 'dribbble': {
-                    addLogoOverlay({
-                        textScale: 1.5,
-                    });
+                    // addLogoOverlay({
+                    //     textScale: 1.5,
+                    // });
+                    this.capture.ready = true;
                     break;
                 }
                 case 'nft': {
